@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIVELLE COSMETICS | Termin Buchung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
+    <!-- Flatpickr for German Date/Time -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/confetti.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        beige: {
+                            50: '#FDFCFB',
+                            100: '#F9F6F2',
+                            200: '#F2ECE4',
+                            300: '#EADDCA',
+                            400: '#D2B48C',
+                            500: '#C19A6B',
+                            600: '#A67C52',
+                        },
+                        stone: {
+                            900: '#1C1917',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-beige-100 font-sans text-stone-900 min-h-screen flex flex-col items-center px-4 py-20">
+
+    <!-- Brand Branding -->
+    <header class="w-full text-center mb-24">
+        <div class="flex flex-col items-center">
+            <span class="font-serif text-3xl tracking-[0.5em] uppercase font-light">Nivelle</span>
+            <span class="text-[12px] tracking-[0.8em] uppercase opacity-50 mt-2">Cosmetics</span>
+        </div>
+    </header>
+
+    <main class="w-full max-w-xl text-center flex-grow">
+        <!-- Large Centered Heading -->
+        <h1 class="font-serif text-5xl md:text-7xl mb-16 tracking-tight">
+            Termin <span class="italic text-beige-500 font-normal">Buchung</span>
+        </h1>
+
+        <!-- Minimalist Form -->
+        <div class="bg-white/50 backdrop-blur-sm p-8 md:p-12 rounded-[2.5rem] shadow-xl border border-white/50 mb-32">
+            <form action="https://formsubmit.co/ajax/nivellecosmetics@gmail.com" method="POST" class="space-y-6">
+                <!-- Hidden Configuration for FormSubmit -->
+                <input type="hidden" name="_subject" value="Neue Buchung - NIVELLE COSMETICS">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Name</label>
+                    <input type="text" name="Name" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Dein Name" required>
+                </div>
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">E-Mail</label>
+                    <input type="email" name="Email" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="hello@beispiel.de" required>
+                </div>
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Telefonnummer</label>
+                    <input type="tel" name="Telefon" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="+49 123 456789" required>
+                </div>
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Datum & Uhrzeit</label>
+                    <input type="text" id="datepicker" name="Termin" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle einen Termin" required>
+                </div>
+                
+                <button type="submit" class="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold text-xl hover:bg-beige-600 transition-all shadow-lg mt-4 transform hover:scale-[1.02] tracking-wide">
+                    Jetzt buchen
+                </button>
+            </form>
+        </div>
+
+        <!-- Success Modal (Overlay) -->
+        <div id="successModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-md"></div>
+            <div class="relative bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-10 text-center border border-white/50">
+                <div class="w-20 h-20 bg-beige-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-beige-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h2 class="font-serif text-3xl mb-4">Danke für deine Buchung!</h2>
+                <p class="text-stone-500 mb-8">Wir freuen uns auf dich.</p>
+                
+                <div class="bg-beige-50 rounded-2xl p-6 mb-8 border border-beige-100">
+                    <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Dein Termin</p>
+                    <p id="confirmedDateTime" class="font-bold text-lg text-stone-900"></p>
+                </div>
+
+                <button id="closeSuccess" class="w-full bg-stone-900 text-white py-4 rounded-xl font-bold hover:bg-beige-600 transition-all">
+                    Schließen
+                </button>
+            </div>
+        </div>
+
+        <!-- Subtle Information Section (Makes the page longer as requested) -->
+         <div class="space-y-32 pb-32">
+             <section class="max-w-md mx-auto">
+                 <h2 class="font-serif text-2xl mb-12 italic text-stone-400">Infos</h2>
+                 <div class="space-y-12">
+                    <div class="flex flex-col items-center">
+                        <span class="text-beige-400 font-serif text-4xl mb-4">01</span>
+                        <h3 class="text-sm uppercase tracking-widest font-bold mb-2">Stornierung</h3>
+                        <p class="text-stone-500 text-sm leading-relaxed">Bitte informiere uns mindestens 24 Stunden vor deinem Termin über eine Stornierung.</p>
+                    </div>
+                    <div class="w-px h-12 bg-beige-300 mx-auto"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-beige-400 font-serif text-4xl mb-4">02</span>
+                        <h3 class="text-sm uppercase tracking-widest font-bold mb-2">Termin ändern</h3>
+                        <p class="text-stone-500 text-sm leading-relaxed">Möchtest du deinen Termin verschieben? Kontaktiere uns bitte frühzeitig.</p>
+                    </div>
+                    <div class="w-px h-12 bg-beige-300 mx-auto"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-beige-400 font-serif text-4xl mb-4">03</span>
+                        <h3 class="text-sm uppercase tracking-widest font-bold mb-2">Nicht erscheinen</h3>
+                        <p class="text-stone-500 text-sm leading-relaxed">Bei Nichterscheinen ohne Absage müssen wir leider die komplette Summe berechnen.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="max-w-sm mx-auto border-t border-beige-200 pt-16 flex flex-col items-center">
+                  <a href="https://www.instagram.com/nivellecosmetics.studio?igsh=MXJhYmNhejF4M2xpeA==" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center">
+                     <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-beige-200 group-hover:shadow-md group-hover:border-beige-400 transition-all duration-300">
+                        <svg class="w-8 h-8 text-stone-900 group-hover:text-beige-600 transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.805.249 2.227.412.56.216.96.474 1.38.894.42.42.678.82.894 1.38.163.422.358 1.057.412 2.227.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.17-.249 1.805-.412 2.227-.216.56-.474.96-.894 1.38-.42.42-.82.678-1.38.894-.422.163-1.057.358-2.227.412-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.054-1.805-.249-2.227-.412-.56-.216-.96-.474-1.38-.894-.42-.42-.678-.82-.894-1.38-.163-.422-.358-1.057-.412-2.227-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.17.249-1.805.412-2.227.216-.56.474-.96.894-1.38.42-.42.82-.678 1.38-.894.422-.163 1.057-.358 2.227-.412 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-1.277.057-2.15.26-2.914.557-.79.307-1.459.717-2.126 1.384-.667.667-1.077 1.335-1.384 2.126-.297.763-.5 1.637-.557 2.914-.058 1.28-.072 1.688-.072 4.947s.014 3.667.072 4.947c.057 1.277.26 2.15.557 2.914.307.79.717 1.459 1.384 2.126.667.667 1.335 1.077 2.126 1.384.763.297 1.637.5 2.914.557 1.28.058 1.688.072 4.947.072s3.667-.014 4.947-.072c1.277-.057 2.15-.26 2.914-.557.79-.307 1.459-.717 2.126-1.384.667-.667 1.077-1.335 1.384-2.126.297-.763.5-1.637.557-2.914.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.057-1.277-.26-2.15-.557-2.914-.307-.79-.717-1.459-1.384-2.126-.667-.667-1.335-1.077-2.126-1.384-.763-.297-1.637-.5-2.914-.557-1.28-.058-1.688-.072-4.947-.072zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </div>
+                    <span class="text-[10px] tracking-[0.3em] uppercase text-stone-400 mt-4 group-hover:text-stone-600 transition-colors">Instagram</span>
+                 </a>
+             </section>
+        </div>
+    </main>
+
+    <!-- Simple Minimal Footer -->
+    <footer class="w-full py-10 text-center text-stone-400 text-[10px] tracking-[0.4em] uppercase border-t border-beige-200">
+        © 2026 NIVELLE COSMETICS · Impressum · Datenschutz
+    </footer>
+
+    <script>
+        // Form Handling and Success Modal
+        const bookingForm = document.querySelector('form');
+        const successModal = document.getElementById('successModal');
+        const closeSuccess = document.getElementById('closeSuccess');
+        const dateInput = document.getElementById('datepicker');
+        const confirmedDateTime = document.getElementById('confirmedDateTime');
+
+        bookingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(bookingForm);
+            
+            // Send form data to FormSubmit via AJAX
+            fetch(bookingForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success === "true" || data.success === true) {
+                    // Get the selected date/time
+                    const selectedVal = dateInput.value;
+                    confirmedDateTime.textContent = selectedVal || "Termin bestätigt";
+
+                    // Show success modal
+                    successModal.classList.remove('hidden');
+                    successModal.classList.add('flex');
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Clear form
+                    bookingForm.reset();
+                } else {
+                    alert("Es gab ein Problem: " + (data.message || "Bitte versuche es später erneut."));
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert("Es gab einen Fehler. Bitte prüfe deine Internetverbindung.");
+            });
+        });
+
+        closeSuccess.addEventListener('click', () => {
+            successModal.classList.add('hidden');
+            successModal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        });
+
+        // Initialize Flatpickr for German Date/Time System
+         flatpickr("#datepicker", {
+             locale: "de",
+             enableTime: true,
+             dateFormat: "d.m.Y H:i",
+             time_24hr: true,
+             minDate: "today",
+             disableMobile: "true",
+             minTime: "09:00",
+             maxTime: "22:00",
+             "disable": [
+                function(date) {
+                    // return true to disable (0 is Sunday, 5 is Friday, 6 is Saturday)
+                    // We want to KEEP Friday (5), Saturday (6), Sunday (0)
+                    // So we DISABLE Monday (1), Tuesday (2), Wednesday (3), Thursday (4)
+                    return (date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3 || date.getDay() === 4);
+                }
+             ]
+         });
+    </script>
+
+</body>
+</html>
