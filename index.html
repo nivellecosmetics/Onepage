@@ -65,6 +65,7 @@
                 <input type="hidden" name="_subject" id="emailSubject" value="Neue Buchung - NIVELLE COSMETICS">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_autorespond" value="Vielen Dank für deine Buchung bei NIVELLE COSMETICS! Wir haben deine Anfrage erhalten und freuen uns auf deinen Besuch. Deine Buchungsdetails findest du in dieser E-Mail.">
                 <!-- Hidden Booking ID Field -->
                 <input type="hidden" name="Buchungsnummer" id="bookingIdField">
                 
@@ -74,7 +75,7 @@
                 </div>
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">E-Mail</label>
-                    <input type="email" name="Email" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="hello@beispiel.de" required>
+                    <input type="email" name="email" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="hello@beispiel.de" required>
                 </div>
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Telefonnummer</label>
@@ -99,7 +100,7 @@
                     <svg class="w-10 h-10 text-beige-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
                 <h2 class="font-serif text-3xl mb-4">Danke für deine Buchung!</h2>
-                <p class="text-stone-500 mb-8">Wir freuen uns auf dich.</p>
+                <p class="text-stone-500 mb-8 italic">Wir haben dir eine Bestätigung per E-Mail gesendet.</p>
                 
                 <div class="bg-beige-50 rounded-2xl p-6 mb-8 border border-beige-100">
                     <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Deine Buchungsnummer</p>
@@ -181,13 +182,19 @@
             
             const formData = new FormData(bookingForm);
             
+            // Create a JSON object from FormData for simpler AJAX
+            const object = {};
+            formData.forEach((value, key) => object[key] = value);
+            const json = JSON.stringify(object);
+
             // Send form data to FormSubmit via AJAX
             fetch(bookingForm.action, {
                 method: 'POST',
-                body: formData,
                 headers: {
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                }
+                },
+                body: json
             }).then(response => response.json())
             .then(data => {
                 if (data.success === "true" || data.success === true) {
