@@ -62,9 +62,11 @@
         <div class="bg-white/50 backdrop-blur-sm p-8 md:p-12 rounded-[2.5rem] shadow-xl border border-white/50 mb-32">
             <form action="https://formsubmit.co/ajax/nivellecosmetics@gmail.com" method="POST" class="space-y-6">
                 <!-- Hidden Configuration for FormSubmit -->
-                <input type="hidden" name="_subject" value="Neue Buchung - NIVELLE COSMETICS">
+                <input type="hidden" name="_subject" id="emailSubject" value="Neue Buchung - NIVELLE COSMETICS">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
+                <!-- Hidden Booking ID Field -->
+                <input type="hidden" name="Buchungsnummer" id="bookingIdField">
                 
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Name</label>
@@ -100,6 +102,9 @@
                 <p class="text-stone-500 mb-8">Wir freuen uns auf dich.</p>
                 
                 <div class="bg-beige-50 rounded-2xl p-6 mb-8 border border-beige-100">
+                    <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Deine Buchungsnummer</p>
+                    <p id="displayBookingId" class="font-serif text-2xl text-beige-600 mb-4 tracking-widest"></p>
+                    
                     <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Dein Termin</p>
                     <p id="confirmedDateTime" class="font-bold text-lg text-stone-900"></p>
                 </div>
@@ -113,8 +118,8 @@
         <!-- Subtle Information Section (Makes the page longer as requested) -->
          <div class="space-y-32 pb-32">
              <section class="max-w-md mx-auto">
-                 <h2 class="font-serif text-2xl mb-12 italic text-stone-400">Infos</h2>
-                 <div class="space-y-12">
+                  <h2 class="font-serif text-2xl mb-12 italic text-stone-400">Wichtige Infos</h2>
+                  <div class="space-y-12">
                     <div class="flex flex-col items-center">
                         <span class="text-beige-400 font-serif text-4xl mb-4">01</span>
                         <h3 class="text-sm uppercase tracking-widest font-bold mb-2">Stornierung</h3>
@@ -160,9 +165,19 @@
         const closeSuccess = document.getElementById('closeSuccess');
         const dateInput = document.getElementById('datepicker');
         const confirmedDateTime = document.getElementById('confirmedDateTime');
+        const bookingIdField = document.getElementById('bookingIdField');
+        const emailSubject = document.getElementById('emailSubject');
+        const displayBookingId = document.getElementById('displayBookingId');
 
         bookingForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            // Generate a 4-digit booking ID
+            const bookingId = Math.floor(1000 + Math.random() * 9000);
+            bookingIdField.value = bookingId;
+            
+            // Set the subject to include the ID so emails don't thread
+            emailSubject.value = `Buchung #${bookingId} - ${bookingForm.Name.value}`;
             
             const formData = new FormData(bookingForm);
             
@@ -176,6 +191,9 @@
             }).then(response => response.json())
             .then(data => {
                 if (data.success === "true" || data.success === true) {
+                    // Display the generated booking ID in the modal
+                    displayBookingId.textContent = `#${bookingIdField.value}`;
+
                     // Get the selected date/time
                     const selectedVal = dateInput.value;
                     confirmedDateTime.textContent = selectedVal || "Termin bestätigt";
