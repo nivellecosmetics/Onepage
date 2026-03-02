@@ -15,7 +15,15 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
 
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
     <script>
+        (function() {
+            // EmailJS Public Key
+            emailjs.init("FAq8tvDZfzBBtVjPZ"); 
+        })();
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -60,30 +68,22 @@
 
         <!-- Minimalist Form -->
         <div class="bg-white/50 backdrop-blur-sm p-8 md:p-12 rounded-[2.5rem] shadow-xl border border-white/50 mb-32">
-            <form action="https://formsubmit.co/ajax/nivellecosmetics@gmail.com" method="POST" class="space-y-6">
-                <!-- Hidden Configuration for FormSubmit -->
-                <input type="hidden" name="_subject" id="emailSubject" value="Neue Buchung - NIVELLE COSMETICS">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="_template" value="table">
-                <input type="hidden" name="_autorespond" value="Vielen Dank für deine Buchung bei NIVELLE COSMETICS! Wir haben deine Anfrage erhalten und freuen uns auf deinen Besuch. Deine Buchungsdetails findest du in dieser E-Mail.">
-                <!-- Hidden Booking ID Field -->
-                <input type="hidden" name="Buchungsnummer" id="bookingIdField">
-                
+            <form id="booking-form" class="space-y-6">
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Name</label>
-                    <input type="text" name="Name" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Dein Name" required>
+                    <input type="text" name="user_name" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Dein Name" required>
                 </div>
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">E-Mail</label>
-                    <input type="email" name="email" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="hello@beispiel.de" required>
+                    <input type="email" name="user_email" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="hello@beispiel.de" required>
                 </div>
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Telefonnummer</label>
-                    <input type="tel" name="Telefon" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="+49 123 456789" required>
+                    <input type="tel" name="user_phone" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="+49 123 456789" required>
                 </div>
                 <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Datum & Uhrzeit</label>
-                    <input type="text" id="datepicker" name="Termin" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle einen Termin" required>
+                    <input type="text" id="datepicker" name="booking_date" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle einen Termin" required>
                 </div>
                 
                 <button type="submit" class="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold text-xl hover:bg-beige-600 transition-all shadow-lg mt-4 transform hover:scale-[1.02] tracking-wide">
@@ -161,64 +161,50 @@
 
     <script>
         // Form Handling and Success Modal
-        const bookingForm = document.querySelector('form');
+        const bookingForm = document.getElementById('booking-form');
         const successModal = document.getElementById('successModal');
         const closeSuccess = document.getElementById('closeSuccess');
         const dateInput = document.getElementById('datepicker');
         const confirmedDateTime = document.getElementById('confirmedDateTime');
-        const bookingIdField = document.getElementById('bookingIdField');
-        const emailSubject = document.getElementById('emailSubject');
         const displayBookingId = document.getElementById('displayBookingId');
 
-        bookingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+        bookingForm.addEventListener('submit', function(event) {
+            event.preventDefault();
             
             // Generate a 4-digit booking ID
             const bookingId = Math.floor(1000 + Math.random() * 9000);
-            bookingIdField.value = bookingId;
             
-            // Set the subject to include the ID so emails don't thread
-            emailSubject.value = `Buchung #${bookingId} - ${bookingForm.Name.value}`;
-            
-            const formData = new FormData(bookingForm);
-            
-            // Create a JSON object from FormData for simpler AJAX
-            const object = {};
-            formData.forEach((value, key) => object[key] = value);
-            const json = JSON.stringify(object);
+            // Add booking ID to a hidden input if it doesn't exist
+            let bookingIdInput = bookingForm.querySelector('input[name="booking_id"]');
+            if (!bookingIdInput) {
+                bookingIdInput = document.createElement('input');
+                bookingIdInput.type = 'hidden';
+                bookingIdInput.name = 'booking_id';
+                bookingForm.appendChild(bookingIdInput);
+            }
+            bookingIdInput.value = bookingId;
 
-            // Send form data to FormSubmit via AJAX
-            fetch(bookingForm.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: json
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success === "true" || data.success === true) {
-                    // Display the generated booking ID in the modal
-                    displayBookingId.textContent = `#${bookingIdField.value}`;
+            // EmailJS Configuration
+            const serviceID = 'service_6ijjjqf';
+            const templateID = 'template_y6v92mq';
 
-                    // Get the selected date/time
-                    const selectedVal = dateInput.value;
-                    confirmedDateTime.textContent = selectedVal || "Termin bestätigt";
+            // Send using sendForm (more reliable)
+            emailjs.sendForm(serviceID, templateID, this)
+                .then(function() {
+                    console.log('SUCCESS!');
+                    // Display success
+                    displayBookingId.textContent = `#${bookingId}`;
+                    confirmedDateTime.textContent = bookingForm.booking_date.value;
 
-                    // Show success modal
                     successModal.classList.remove('hidden');
                     successModal.classList.add('flex');
                     document.body.style.overflow = 'hidden';
                     
-                    // Clear form
                     bookingForm.reset();
-                } else {
-                    alert("Es gab ein Problem: " + (data.message || "Bitte versuche es später erneut."));
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert("Es gab einen Fehler. Bitte prüfe deine Internetverbindung.");
-            });
+                }, function(error) {
+                    console.error('FAILED...', error);
+                    alert("❌ Fehler 422: Bitte prüfe, ob die Namen im EmailJS-Template exakt so heißen:\n\n{{user_name}}\n{{user_email}}\n{{user_phone}}\n{{booking_date}}\n{{booking_id}}");
+                });
         });
 
         closeSuccess.addEventListener('click', () => {
