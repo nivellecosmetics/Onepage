@@ -62,10 +62,14 @@
 
         @media (max-width: 768px) {
             body {
-                /* Auf Handys "rausgezoomt" wirken lassen */
-                background-attachment: scroll;
-                background-size: 100% auto; /* Breite auf 100%, Höhe automatisch - zeigt mehr vom Bild */
-                background-position: top center;
+                /* Auf Handys das Bild fixieren und den Zoom-Effekt minimieren */
+                background-attachment: fixed;
+                background-size: cover;
+                background-position: center center;
+                /* Fallback für ältere Browser */
+                -webkit-background-size: cover;
+                -moz-background-size: cover;
+                -o-background-size: cover;
             }
         }
     </style>
