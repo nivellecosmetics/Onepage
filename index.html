@@ -49,8 +49,28 @@
             }
         }
     </script>
+    <style>
+        /* Mobile-spezifische Anpassungen für den Hintergrund */
+        body {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('background.jpg');
+            background-color: #F9F6F2;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                /* Auf Handys "rausgezoomt" wirken lassen */
+                background-attachment: scroll;
+                background-size: 100% auto; /* Breite auf 100%, Höhe automatisch - zeigt mehr vom Bild */
+                background-position: top center;
+            }
+        }
+    </style>
 </head>
-<body class="font-sans text-stone-900 min-h-screen flex flex-col items-center px-4 pt-0 pb-8 bg-fixed bg-cover bg-center bg-no-repeat" style="background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('background.jpg'); background-color: #F9F6F2;">
+<body class="font-sans text-stone-900 min-h-screen flex flex-col items-center px-4 pt-0 pb-8">
 
     <!-- Brand Branding -->
     <header class="w-full text-center mb-0 -mt-10">
