@@ -82,6 +82,25 @@
                     <input type="tel" name="user_phone" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="+49 123 456789" required>
                 </div>
                 <div class="text-left">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Behandlung</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative cursor-pointer group flex">
+                            <input type="radio" name="treatment" value="Microneedling (109 €)" class="peer sr-only" checked required>
+                            <div class="w-full flex flex-col items-center justify-center px-4 py-4 bg-white border border-beige-200 rounded-2xl text-center transition-all hover:border-beige-300 peer-checked:border-beige-500 peer-checked:bg-beige-50">
+                                <span class="text-sm font-medium text-stone-600">Microneedling</span>
+                                <span class="text-xs text-beige-600 font-bold mt-1">109 €</span>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer group flex">
+                            <input type="radio" name="treatment" value="Gesichtsbehandlung (79 €)" class="peer sr-only">
+                            <div class="w-full flex flex-col items-center justify-center px-4 py-4 bg-white border border-beige-200 rounded-2xl text-center transition-all hover:border-beige-300 peer-checked:border-beige-500 peer-checked:bg-beige-50">
+                                <span class="text-sm font-medium text-stone-600 leading-tight">Gesichtsbehandlung</span>
+                                <span class="text-xs text-beige-600 font-bold mt-1">79 €</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="text-left">
                     <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Datum & Uhrzeit</label>
                     <input type="text" id="datepicker" name="booking_date" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle einen Termin" required>
                 </div>
@@ -106,6 +125,9 @@
                     <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Deine Buchungsnummer</p>
                     <p id="displayBookingId" class="font-serif text-2xl text-beige-600 mb-4 tracking-widest"></p>
                     
+                    <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Deine Behandlung</p>
+                    <p id="confirmedTreatment" class="font-bold text-lg text-stone-900 mb-4"></p>
+
                     <p class="text-xs uppercase tracking-widest text-stone-400 mb-1">Dein Termin</p>
                     <p id="confirmedDateTime" class="font-bold text-lg text-stone-900"></p>
                 </div>
@@ -166,9 +188,10 @@
         const closeSuccess = document.getElementById('closeSuccess');
         const dateInput = document.getElementById('datepicker');
         const confirmedDateTime = document.getElementById('confirmedDateTime');
+        const confirmedTreatment = document.getElementById('confirmedTreatment');
         const displayBookingId = document.getElementById('displayBookingId');
 
-        bookingForm.addEventListener('submit', function(event) {
+         bookingForm.addEventListener('submit', function(event) {
             event.preventDefault();
             
             // Generate a 4-digit booking ID
@@ -184,26 +207,46 @@
             }
             bookingIdInput.value = bookingId;
 
-            // EmailJS Configuration
+            // 1. Send Email to CUSTOMER via EmailJS
             const serviceID = 'service_6ijjjqf';
             const templateID = 'template_y6v92mq';
 
-            // Send using sendForm (more reliable)
-            emailjs.sendForm(serviceID, templateID, this)
-                .then(function() {
-                    console.log('SUCCESS!');
+            const emailjsPromise = emailjs.sendForm(serviceID, templateID, this);
+
+            // 2. Send Email to OWNER via FormSubmit
+            const formData = new FormData(this);
+            const formSubmitData = new FormData();
+            formData.forEach((value, key) => formSubmitData.append(key, value));
+            formSubmitData.append('_subject', `Neue Buchung #${bookingId} - ${bookingForm.user_name.value}`);
+            formSubmitData.append('_template', 'table');
+            formSubmitData.append('_captcha', 'false');
+
+            const formSubmitPromise = fetch('https://formsubmit.co/ajax/nivellecosmetics@gmail.com', {
+                method: 'POST',
+                body: formSubmitData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            // Wait for both to finish
+            Promise.all([emailjsPromise, formSubmitPromise])
+                .then(function(results) {
+                    console.log('SUCCESS! Both emails sent.');
                     // Display success
                     displayBookingId.textContent = `#${bookingId}`;
                     confirmedDateTime.textContent = bookingForm.booking_date.value;
+                    confirmedTreatment.textContent = bookingForm.treatment.value;
 
                     successModal.classList.remove('hidden');
                     successModal.classList.add('flex');
                     document.body.style.overflow = 'hidden';
                     
                     bookingForm.reset();
-                }, function(error) {
+                })
+                .catch(function(error) {
                     console.error('FAILED...', error);
-                    alert("❌ Fehler 422: Bitte prüfe, ob die Namen im EmailJS-Template exakt so heißen:\n\n{{user_name}}\n{{user_email}}\n{{user_phone}}\n{{booking_date}}\n{{booking_id}}");
+                    alert("Es gab ein Problem beim Senden der Buchung. Bitte versuche es erneut.");
                 });
         });
 
@@ -214,24 +257,69 @@
         });
 
         // Initialize Flatpickr for German Date/Time System
-         flatpickr("#datepicker", {
-             locale: "de",
-             enableTime: true,
-             dateFormat: "d.m.Y H:i",
-             time_24hr: true,
-             minDate: "today",
-             disableMobile: "true",
-             minTime: "09:00",
-             maxTime: "22:00",
-             "disable": [
-                function(date) {
-                    // return true to disable (0 is Sunday, 5 is Friday, 6 is Saturday)
-                    // We want to KEEP Friday (5), Saturday (6), Sunday (0)
-                    // So we DISABLE Monday (1), Tuesday (2), Wednesday (3), Thursday (4)
-                    return (date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3 || date.getDay() === 4);
+          flatpickr("#datepicker", {
+              locale: "de",
+              enableTime: true,
+              dateFormat: "d.m.Y H:i",
+              time_24hr: true,
+              minDate: "today",
+              disableMobile: "true",
+              minTime: "12:00",
+               maxTime: "20:00",
+               minuteIncrement: 30,
+               "disable": [
+                  function(date) {
+                      // return true to disable
+                      // We want to KEEP Thursday (4), Friday (5), Saturday (6)
+                      // So we DISABLE Sunday (0), Monday (1), Tuesday (2), Wednesday (3)
+                      return (date.getDay() === 0 || date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3);
+                  }
+               ],
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        const startDate = selectedDates[0];
+                        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
+                        
+                        const formatTime = (date) => {
+                            return date.getHours().toString().padStart(2, '0') + ":" + 
+                                   date.getMinutes().toString().padStart(2, '0');
+                        };
+                        
+                        const formatDate = (date) => {
+                            return date.getDate().toString().padStart(2, '0') + "." + 
+                                   (date.getMonth() + 1).toString().padStart(2, '0') + "." + 
+                                   date.getFullYear();
+                        };
+  
+                        const rangeStr = `${formatDate(startDate)}   ${formatTime(startDate)} bis ${formatTime(endDate)} Uhr`;
+                        
+                        // Set value with a small delay to prevent Flatpickr from overwriting it
+                        setTimeout(() => {
+                            instance.input.value = rangeStr;
+                        }, 1);
+                    }
+                },
+                onClose: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        const startDate = selectedDates[0];
+                        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
+                        
+                        const formatTime = (date) => {
+                            return date.getHours().toString().padStart(2, '0') + ":" + 
+                                   date.getMinutes().toString().padStart(2, '0');
+                        };
+                        
+                        const formatDate = (date) => {
+                            return date.getDate().toString().padStart(2, '0') + "." + 
+                                   (date.getMonth() + 1).toString().padStart(2, '0') + "." + 
+                                   date.getFullYear();
+                        };
+  
+                        const rangeStr = `${formatDate(startDate)}   ${formatTime(startDate)} bis ${formatTime(endDate)} Uhr`;
+                        instance.input.value = rangeStr;
+                    }
                 }
-             ]
-         });
+            });
     </script>
 
 </body>
