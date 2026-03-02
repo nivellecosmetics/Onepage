@@ -62,14 +62,11 @@
 
         @media (max-width: 768px) {
             body {
-                /* Auf Handys das Bild fixieren und den Zoom-Effekt minimieren */
-                background-attachment: fixed;
-                background-size: cover;
-                background-position: center center;
-                /* Fallback für ältere Browser */
-                -webkit-background-size: cover;
-                -moz-background-size: cover;
-                -o-background-size: cover;
+                /* Hintergrundbild auf Handys wiederholen statt zu zoomen */
+                background-attachment: scroll;
+                background-size: 100% auto; /* Breite 100%, Höhe passt sich an */
+                background-repeat: repeat-y; /* Wiederholt das Bild nach unten */
+                background-position: top center;
             }
         }
     </style>
