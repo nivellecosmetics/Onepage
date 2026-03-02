@@ -62,11 +62,13 @@
 
         @media (max-width: 768px) {
             body {
-                /* Hintergrundbild auf Handys wiederholen statt zu zoomen */
+                /* Ein spezieller Fix für Mobilgeräte, um das Bild rauszuzoomen ohne Kanten */
                 background-attachment: scroll;
-                background-size: 100% auto; /* Breite 100%, Höhe passt sich an */
-                background-repeat: repeat-y; /* Wiederholt das Bild nach unten */
-                background-position: top center;
+                background-size: cover;
+                background-position: center 20%; /* Schiebt das Bild etwas nach oben für besseren Fokus */
+                background-repeat: no-repeat;
+                /* Wir fügen eine feste Hintergrundfarbe hinzu, die zum Bild passt, für den unteren Bereich */
+                background-color: #dbc9b9; 
             }
         }
     </style>
