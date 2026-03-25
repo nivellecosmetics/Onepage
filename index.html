@@ -9,6 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     
+    <!-- Preload Background Image for faster mobile loading -->
+    <link rel="preload" as="image" href="background.jpg">
+    
     <!-- Flatpickr for German Date/Time -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/confetti.css">
@@ -18,7 +21,16 @@
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
+        // Supabase Konfiguration
+        const SUPABASE_URL = 'https://bcxxtbdjsnjowzrgfcpd.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_UqbLRPqcWx3pVNJf2qEI9w_JEQVEMLT';
+        const { createClient } = window.supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
         (function() {
             // EmailJS Public Key
             emailjs.init("FAq8tvDZfzBBtVjPZ"); 
@@ -50,7 +62,7 @@
         }
     </script>
 </head>
-<body class="font-sans text-stone-900 min-h-screen flex flex-col items-center px-4 pt-0 pb-8 bg-fixed bg-cover bg-center bg-no-repeat" style="background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('background.jpg'); background-color: #F9F6F2;">
+<body class="font-sans text-stone-900 min-h-screen flex flex-col items-center px-4 pt-0 pb-8 bg-fixed bg-cover bg-center bg-no-repeat" style="background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url('background.jpg'); background-color: #F2ECE4;">
 
     <!-- Brand Branding -->
     <header class="w-full text-center mb-0 -mt-10">
@@ -100,8 +112,17 @@
                     </div>
                 </div>
                 <div class="text-left">
-                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Datum & Uhrzeit</label>
-                    <input type="text" id="datepicker" name="booking_date" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle einen Termin" required>
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Datum</label>
+                    <input type="text" id="datepicker" name="booking_date_raw" class="w-full px-6 py-4 bg-white border border-beige-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-beige-400 transition-all text-lg" placeholder="Wähle ein Datum" required readonly>
+                </div>
+
+                <div id="time-slots-container" class="text-left hidden">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Verfügbare Uhrzeiten (90 Min. Abstand)</label>
+                    <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <!-- Slots will be injected here -->
+                    </div>
+                    <input type="hidden" id="selected-time" name="booking_time" required>
+                    <input type="hidden" id="final-booking-date" name="booking_date">
                 </div>
                 
                 <button type="submit" class="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold text-xl hover:bg-beige-600 transition-all shadow-lg mt-4 transform hover:scale-[1.02] tracking-wide">
@@ -192,6 +213,13 @@
 
          bookingForm.addEventListener('submit', function(event) {
             event.preventDefault();
+
+            // Check if a time slot has been selected
+            const selectedTime = document.getElementById('selected-time').value;
+            if (!selectedTime) {
+                alert("Bitte wähle eine Uhrzeit aus.");
+                return;
+            }
             
             // Generate a 4-digit booking ID
             const bookingId = Math.floor(1000 + Math.random() * 9000);
@@ -228,11 +256,26 @@
                 }
             });
 
-            // Wait for both to finish
-            Promise.all([emailjsPromise, formSubmitPromise])
+            // 3. Buchung in Supabase speichern (Nur das nötigste für das Ausgrauen)
+            const supabasePromise = supabaseClient
+                .from('bookings')
+                .insert([{ 
+                    booking_date_str: `${formData.get('booking_date_raw')} ${formData.get('booking_time')}`
+                }])
+                .then(result => {
+                    if (result.error) {
+                        console.error("Supabase Error:", result.error);
+                        throw new Error(`Supabase-Fehler: ${result.error.message}`);
+                    }
+                    return result;
+                });
+
+            // Wait for all to finish
+            Promise.all([emailjsPromise, formSubmitPromise, supabasePromise])
                 .then(function(results) {
-                    console.log('SUCCESS! Both emails sent.');
-                    // Display success
+                    console.log('SUCCESS! All systems go.');
+                    fetchBookedSlots();
+                    
                     displayBookingId.textContent = `#${bookingId}`;
                     confirmedDateTime.textContent = bookingForm.booking_date.value;
                     confirmedTreatment.textContent = bookingForm.treatment.value;
@@ -242,10 +285,19 @@
                     document.body.style.overflow = 'hidden';
                     
                     bookingForm.reset();
+                    document.getElementById('time-slots-container').classList.add('hidden');
+                    document.getElementById('time-slots-grid').innerHTML = '';
                 })
                 .catch(function(error) {
-                    console.error('FAILED...', error);
-                    alert("Es gab ein Problem beim Senden der Buchung. Bitte versuche es erneut.");
+                    console.error('DETAILED ERROR:', error);
+                    // Zeige dem Benutzer eine spezifischere Fehlermeldung
+                    let errorMsg = "Es gab ein Problem.";
+                    if (error.message && error.message.includes("Supabase")) {
+                        errorMsg = "Datenbank-Fehler: Bitte prüfe, ob die Tabelle 'bookings' und die Spalte 'booking_date_str' in Supabase existieren.";
+                    } else {
+                        errorMsg = "Es gab ein Problem beim Senden der Buchung. Bitte versuche es erneut.";
+                    }
+                    alert(errorMsg + "\n\nFehler-Details: " + (error.message || error));
                 });
         });
 
@@ -255,70 +307,116 @@
             document.body.style.overflow = 'auto';
         });
 
-        // Initialize Flatpickr for German Date/Time System
-          flatpickr("#datepicker", {
-              locale: "de",
-              enableTime: true,
-              dateFormat: "d.m.Y H:i",
-              time_24hr: true,
-              minDate: "today",
-              disableMobile: "true",
-              minTime: "12:00",
-               maxTime: "20:00",
-               minuteIncrement: 30,
-               "disable": [
-                  function(date) {
-                      // return true to disable
-                      // We want to KEEP Thursday (4), Friday (5), Saturday (6)
-                      // So we DISABLE Sunday (0), Monday (1), Tuesday (2), Wednesday (3)
-                      return (date.getDay() === 0 || date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3);
-                  }
-               ],
-                onChange: function(selectedDates, dateStr, instance) {
-                    if (selectedDates.length > 0) {
-                        const startDate = selectedDates[0];
-                        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
-                        
-                        const formatTime = (date) => {
-                            return date.getHours().toString().padStart(2, '0') + ":" + 
-                                   date.getMinutes().toString().padStart(2, '0');
-                        };
-                        
-                        const formatDate = (date) => {
-                            return date.getDate().toString().padStart(2, '0') + "." + 
-                                   (date.getMonth() + 1).toString().padStart(2, '0') + "." + 
-                                   date.getFullYear();
-                        };
-  
-                        const rangeStr = `${formatDate(startDate)}   ${formatTime(startDate)} bis ${formatTime(endDate)} Uhr`;
-                        
-                        // Set value with a small delay to prevent Flatpickr from overwriting it
-                        setTimeout(() => {
-                            instance.input.value = rangeStr;
-                        }, 1);
-                    }
-                },
-                onClose: function(selectedDates, dateStr, instance) {
-                    if (selectedDates.length > 0) {
-                        const startDate = selectedDates[0];
-                        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
-                        
-                        const formatTime = (date) => {
-                            return date.getHours().toString().padStart(2, '0') + ":" + 
-                                   date.getMinutes().toString().padStart(2, '0');
-                        };
-                        
-                        const formatDate = (date) => {
-                            return date.getDate().toString().padStart(2, '0') + "." + 
-                                   (date.getMonth() + 1).toString().padStart(2, '0') + "." + 
-                                   date.getFullYear();
-                        };
-  
-                        const rangeStr = `${formatDate(startDate)}   ${formatTime(startDate)} bis ${formatTime(endDate)} Uhr`;
-                        instance.input.value = rangeStr;
-                    }
+        // Diese Liste wird nun dynamisch von Supabase geladen
+        let bookedSlots = [];
+
+        // Funktion zum Laden der gebuchten Termine von Supabase
+        async function fetchBookedSlots() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('bookings')
+                    .select('booking_date_str');
+                
+                if (error) {
+                    console.error("Supabase Select Error:", error);
+                    return;
                 }
+                if (data) {
+                    bookedSlots = data.map(item => item.booking_date_str);
+                    console.log("Gebuchte Termine geladen:", bookedSlots);
+                }
+            } catch (err) {
+                console.error("Unerwarteter Fehler beim Laden:", err);
+            }
+        }
+
+        // Beim Laden der Seite Termine abrufen
+        fetchBookedSlots();
+
+        // Hilfsfunktion zum Generieren der validen 90-Minuten-Slots ab 12:00
+        function getValidSlots() {
+            return ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30"];
+        }
+
+        // Initialize Flatpickr for German Date System (Date Only)
+        flatpickr("#datepicker", {
+            locale: "de",
+            dateFormat: "d.m.Y",
+            minDate: "16.04.2026",
+            disableMobile: "true",
+            disable: [
+                function(date) {
+                    // Deaktiviere Sonntag (0) bis Mittwoch (3)
+                    // Behalte Donnerstag (4), Freitag (5), Samstag (6)
+                    return (date.getDay() === 0 || date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3);
+                }
+            ],
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length > 0) {
+                    showTimeSlots(selectedDates[0], dateStr);
+                }
+            }
+        });
+
+        function showTimeSlots(date, dateStr) {
+            const container = document.getElementById('time-slots-container');
+            const grid = document.getElementById('time-slots-grid');
+            const selectedTimeInput = document.getElementById('selected-time');
+            const finalBookingDateInput = document.getElementById('final-booking-date');
+            
+            grid.innerHTML = ''; // Clear existing slots
+            container.classList.remove('hidden');
+            selectedTimeInput.value = ''; // Reset selected time
+
+            const slots = getValidSlots();
+            
+            slots.forEach(time => {
+                const checkStr = `${dateStr} ${time}`;
+                const isBooked = bookedSlots.includes(checkStr);
+                
+                // Calculate end time (90 min later) for display
+                const [hour, minute] = time.split(':').map(Number);
+                const start = new Date(date);
+                start.setHours(hour, minute, 0);
+                const end = new Date(start.getTime() + 90 * 60 * 1000);
+                const formatTime = (d) => d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
+                const timeRangeDisplay = `${time} - ${formatTime(end)}`;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = timeRangeDisplay;
+                button.className = `px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                    isBooked 
+                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' 
+                    : 'bg-white text-stone-900 border-beige-200 hover:border-beige-500 hover:bg-beige-50'
+                }`;
+                
+                if (!isBooked) {
+                    button.onclick = () => {
+                        // Deselect others
+                        grid.querySelectorAll('button').forEach(btn => {
+                            if (!btn.disabled) {
+                                btn.className = 'px-4 py-3 rounded-xl border text-sm font-medium transition-all bg-white text-stone-900 border-beige-200 hover:border-beige-500 hover:bg-beige-50';
+                            }
+                        });
+                        // Select this one
+                        button.className = 'px-4 py-3 rounded-xl border text-sm font-medium transition-all bg-beige-500 text-white border-beige-500 shadow-md';
+                        
+                        const rangeStr = `${dateStr}   ${time} bis ${formatTime(end)} Uhr`;
+                        
+                        selectedTimeInput.value = time;
+                        finalBookingDateInput.value = rangeStr;
+                    };
+                } else {
+                    button.disabled = true;
+                }
+                
+                grid.appendChild(button);
             });
+            
+            // Scroll to slots
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     </script>
 
 </body>
