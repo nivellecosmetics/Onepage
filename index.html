@@ -117,7 +117,7 @@
                 </div>
 
                 <div id="time-slots-container" class="text-left hidden">
-                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Verfügbare Uhrzeiten (90 Min. Abstand)</label>
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-2 ml-2">Verfügbare Uhrzeiten</label>
                     <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <!-- Slots will be injected here -->
                     </div>
@@ -333,7 +333,7 @@
         // Beim Laden der Seite Termine abrufen
         fetchBookedSlots();
 
-        // Hilfsfunktion zum Generieren der validen 90-Minuten-Slots ab 12:00
+        // 60 Minuten Behandlung plus 30 Minuten Puffer bis zum nächsten Termin
         function getValidSlots() {
             return ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30"];
         }
@@ -346,9 +346,8 @@
             disableMobile: "true",
             disable: [
                 function(date) {
-                    // Deaktiviere Sonntag (0) bis Mittwoch (3)
-                    // Behalte Donnerstag (4), Freitag (5), Samstag (6)
-                    return (date.getDay() === 0 || date.getDay() === 1 || date.getDay() === 2 || date.getDay() === 3);
+                    // Erlaube nur Donnerstag (4) und Freitag (5)
+                    return date.getDay() !== 4 && date.getDay() !== 5;
                 }
             ],
             onChange: function(selectedDates, dateStr) {
@@ -374,11 +373,11 @@
                 const checkStr = `${dateStr} ${time}`;
                 const isBooked = bookedSlots.includes(checkStr);
                 
-                // Calculate end time (90 min later) for display
+                // Die Behandlung dauert 60 Minuten.
                 const [hour, minute] = time.split(':').map(Number);
                 const start = new Date(date);
                 start.setHours(hour, minute, 0);
-                const end = new Date(start.getTime() + 90 * 60 * 1000);
+                const end = new Date(start.getTime() + 60 * 60 * 1000);
                 const formatTime = (d) => d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
                 const timeRangeDisplay = `${time} - ${formatTime(end)}`;
 
